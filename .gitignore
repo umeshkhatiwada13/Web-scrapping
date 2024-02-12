@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+# Byte-compiled / optimized / DLL Scraped_data
 __pycache__/
 *.pyc
 *.pyo
@@ -11,7 +11,7 @@ __pycache__/
 # Environment variables file
 .env
 
-# IDE-specific files (PyCharm)
+# IDE-specific Scraped_data (PyCharm)
 .idea/
 
 # Python virtual environment

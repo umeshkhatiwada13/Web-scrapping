@@ -24,7 +24,7 @@ search_box.send_keys(Keys.RETURN)
 
 WebDriverWait(driver, 5).until(
     EC.presence_of_element_located((By.TAG_NAME, "h3"))
-)
+) 
 
 link = driver.find_element(By.TAG_NAME, "h3")
 link.click()
