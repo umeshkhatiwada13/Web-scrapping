@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Environment variables file
+.env
+
+# IDE-specific files (PyCharm)
+.idea/
+
+# Python virtual environment
+venv/
