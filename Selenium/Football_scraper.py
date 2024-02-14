@@ -28,6 +28,7 @@ away_team = []
 
 # Iterate over each match row to extract data
 for match in matches:
+    print(match)
     # Extract data from each column (td) of the current match row
     date.append(match.find_element(By.XPATH, './td[1]').text)
     home_team.append(match.find_element(By.XPATH, './td[2]').text)
