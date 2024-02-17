@@ -1,7 +1,16 @@
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 # Import pandas library
 import pandas as pd
+
+# Create Chrome options with headless mode
+headless_config = Options()
+headless_config.add_argument("--headless=new")
+headless_config.add_argument('--window-size=1920x1080')  # Set window size
+
+# Initialize the Chrome driver
+driver = webdriver.Chrome(options=headless_config)
 
 
 def separate_rating(rating_string):
@@ -27,10 +36,10 @@ def separate_rating(rating_string):
 
 website = "https://www.audible.ca/search "
 
-driver = webdriver.Chrome()
+# driver = webdriver.Chrome(options=headless_config)
 
 driver.get(website)
-driver.maximize_window()
+# driver.maximize_window()
 
 container = driver.find_element(By.CLASS_NAME, 'adbl-impression-container')
 products = container.find_elements(By.XPATH, './/li[contains(@class, "productListItem")]')
@@ -84,3 +93,5 @@ df.head()
 
 # Export the dataframe to audiobooks.csv with no index
 df.to_csv("audiobooks.csv", index=False)
+
+driver.quit()
