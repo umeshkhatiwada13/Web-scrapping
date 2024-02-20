@@ -5,6 +5,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 import time
 import numpy as np
+import pandas as pd
 
 driver = webdriver.Chrome()
 website = 'https://ca.indeed.com/jobs?q=&l=Toronto%2C+ON&fromage=1&vjk=24a0fdea9ecadf02'
@@ -41,7 +42,7 @@ for job in jobs:
                                               ".//h2[contains(@class, 'jobsearch-JobInfoHeader-title')]").text
 
     if title:
-        title_array.append(title.split("-")[0])
+        title_array.append(title.split("-")[0].strip())
 
         try:
             company = extra_data_container.find_element(By.XPATH, "//div[@data-testid='inlineHeader-companyName']").text
@@ -51,23 +52,39 @@ for job in jobs:
 
         job_details = extra_data_container.find_elements(By.XPATH,
                                                          "//div[contains(@class, 'js-match-insights-provider-16m282m')]")
+
+        # Initialize flags for tracking whether data has been appended for each job
+        appended_pay = False
+        appended_job_type = False
+        appended_shift = False
+
         for job_detail in job_details:
             data_head = job_detail.find_element(By.XPATH,
                                                 ".//div[contains(@class, 'js-match-insights-provider-e6s05i')]")
 
             title = data_head.find_element(By.TAG_NAME, "h3").text.lower().replace(" ", '_')
             text_body = data_head.find_elements(By.TAG_NAME, 'li')
-            final_text = ' '.join(map(lambda x: x.text, text_body))
-            print("Title", title)
-            for title in text_body:
-                print("sub : ", title.text)
+            final_text = ', '.join(map(lambda x: x.text, text_body))
 
-            if title == 'pay':
+            if title == 'pay' and not appended_pay:
                 pay_array.append(final_text)
-            elif title == 'job_type':
+                appended_pay = True
+            elif title == 'job_type' and not appended_job_type:
                 job_type_array.append(final_text)
-            else:
+                appended_job_type = True
+            elif title == 'shift_and_schedule' and not appended_shift:
                 shift_array.append(final_text)
+                appended_shift = True
+
+        # If data is not appended for pay_array, append NaN
+        if not appended_pay:
+            pay_array.append(np.nan)
+        # If data is not appended for job_type_array, append NaN
+        if not appended_job_type:
+            job_type_array.append(np.nan)
+        # If data is not appended for shift_array, append NaN
+        if not appended_shift:
+            shift_array.append(np.nan)
 
         try:
             location = extra_data_container.find_element(By.XPATH, "//div[@data-testid='job-location']").text
@@ -76,22 +93,19 @@ for job in jobs:
         location_array.append(location)
 
         try:
-            description = extra_data_container.find_element(By.ID, "jobDescriptionText").text
+            description = extra_data_container.find_element(By.ID, "jobDescriptionText").text.strip()
         except NoSuchElementException:
             description = np.nan
-        description_array.append(location)
+        description_array.append(description)
 
         try:
             benefits = extra_data_container.find_element(By.ID, 'benefits')
-            li_texts = ' '.join(map(lambda li: li.text, benefits.find_elements(By.TAG_NAME, 'li')))
-            print("Benefits ", li_texts)
+            li_texts = ', '.join(map(lambda li: li.text, benefits.find_elements(By.TAG_NAME, 'li')))
         except NoSuchElementException:
-            benefits = np.nan
-        benefit_array.append(benefits)
+            li_texts = np.nan
+        benefit_array.append(li_texts)
 
 time.sleep(7)
-
-time.sleep(25)
 
 driver.quit()
 
@@ -105,3 +119,25 @@ print("Length of benefit_array:", len(benefit_array))
 print("Length of pay_array:", len(pay_array))
 print("Length of job_type_array:", len(job_type_array))
 print("Length of shift_array:", len(shift_array))
+
+# Create a DataFrame
+data = {
+    'Title': title_array,
+    'Company': company_array,
+    'Location': location_array,
+    'Description': description_array,
+    # 'Error': error_array,
+    'Benefit': benefit_array,
+    'Pay': pay_array,
+    'Job Type': job_type_array,
+    'Shift': shift_array
+}
+
+df = pd.DataFrame(data)
+
+df.head()
+
+df.to_csv("indeed.csv", encoding='utf-8', index=False)
+
+# Now you have a DataFrame containing data from the arrays
+print("DataFrame Shape:", df.shape)
