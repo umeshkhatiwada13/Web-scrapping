@@ -5,7 +5,7 @@ import pandas as pd
 
 web_site = 'https://www.kijiji.ca/b-for-rent/city-of-toronto/c30349001l1700273'
 page_number = 1
-last_page = 100
+last_page = 200
 ad_url = []
 
 

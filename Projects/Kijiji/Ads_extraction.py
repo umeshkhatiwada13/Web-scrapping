@@ -26,12 +26,13 @@ url_list = df['URL'].tolist()  # Assuming 'URL' is the column containing the URL
 
 data = []
 
+counter = 1
 # Loop through the list of URLs and process each one
 for url in url_list:
-    print(url)
+    # print(url)
     soup = get_soup(url)
     if soup:
-
+        print("Number ", counter, ' and URL ', url)
         # Initialize a dictionary to store the extracted data for this URL
         ad_data = {}
 
@@ -44,7 +45,11 @@ for url in url_list:
 
         # Extract Price
         price_elem = soup.find(class_='priceWrapper-3915768379')
-        ad_data['Price'] = price_elem.text.strip() if price_elem else None
+        if price_elem:
+            ad_data['Price'] = price_elem.text.strip()
+        else:
+            backup_price_elem = soup.find(class_='currentPrice-231544276')
+            ad_data['Price'] = backup_price_elem.text.strip() if backup_price_elem else None
 
         # Extract Address
         address_elem = soup.find(itemprop='address')
@@ -54,7 +59,7 @@ for url in url_list:
         posting_date_elem = soup.find(class_='datePosted-1776470403')
 
         # Extract posting date if posting_date_elem is present
-        if posting_date_elem:
+        if posting_date_elem is not None:
             ad_data['Posting Date'] = posting_date_elem.time['title']
         else:
             ad_data['Posting Date'] = None
@@ -76,6 +81,30 @@ for url in url_list:
             ad_data['Bedrooms'] = None
             ad_data['Bathrooms'] = None
             ad_data['Building Type'] = None
+
+        # Initialize ad_data dictionary
+        ad_data_list = {
+            "Size (sqft)": None,
+            "Furnished": None,
+            "Appliances": None,
+            "Air Conditioning": None,
+            "Personal Outdoor Space": None,
+            "Smoking Permitted": None
+        }
+
+        # Extract Size (sqft), Furnished, Appliances, Air Conditioning, Personal Outdoor Space, Smoking Permitted
+        root_div = soup.find(class_='root-3161363123')
+        if root_div:
+            attribute_lists = root_div.find_all('ul', class_='list-2534755251')
+            for attribute_list in attribute_lists:
+                attributes = attribute_list.find_all('li', class_='twoLinesAttribute-633292638')
+                for attribute in attributes:
+                    label = attribute.find('dt', class_='twoLinesLabel-2332083105').text.strip()
+                    value = attribute.find('dd', class_='twoLinesValue-2653438411').text.strip()
+                    if label in ad_data_list:
+                        ad_data[label] = value
+                    else:
+                        ad_data[label] = None
 
         # Extract attributes from Overview section
         overview_section = soup.find('h3', string='Overview')
@@ -109,9 +138,9 @@ for url in url_list:
                         attribute_title_elem = li.find('dt', class_='twoLinesLabel-2332083105')
                         if attribute_title_elem:  # Check if attribute_title_elem is not None
                             attribute_title = attribute_title_elem.text.strip()
-                            print('Attribute Title:', attribute_title)
-                        else:
-                            print('Attribute Title not found.')
+                            # print('Attribute Title:', attribute_title)
+                        # else:
+                        # print('Attribute Title not found.')
                     except Exception as e:
                         print('An error occurred:', e)
 
@@ -125,8 +154,8 @@ for url in url_list:
                     attribute_value_elem = li.find('dd', class_='twoLinesValue-2653438411')
                     attribute_value = attribute_value_elem.text.strip() if attribute_value_elem else None
                     ad_data[attribute_title] = attribute_value
-                else:
-                    print('Attribute title not found.')
+                # else:
+                # print('Attribute title not found.')
 
         # Extract description
         description_elm = soup.select_one('.descriptionContainer-2067035870 p')
@@ -150,11 +179,13 @@ for url in url_list:
         # Append the extracted data to the list
         data.append(ad_data)
 
+        counter += 1
+
     # Create a DataFrame from the collected data
     df = pd.DataFrame(data)
 
     # Save the DataFrame to a CSV file
-    df.to_csv('output.csv', index=False)
+    df.to_csv('output_1.csv', index=False)
 
     # Display the DataFrame
-    print(df)
+    # print(df)
