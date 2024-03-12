@@ -1,14 +1,13 @@
 import requests
 from bs4 import BeautifulSoup
-import re
 import pandas as pd
 from datetime import datetime
+import Utils
 
 web_site = 'https://www.kijiji.ca/b-for-rent/city-of-toronto/c30349001l1700273'
 page_number = 1
 last_page = 6
 ad_url = []
-
 
 # Function to extract URLs from the current page
 def extract_urls(soup):
@@ -20,26 +19,9 @@ def extract_urls(soup):
     return hrefs
 
 
-def get_last_page(soup):
-    # Find the element containing pagination
-    pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
-
-    # Find all page links
-    page_links = pagination_element.find_all('li', {'data-testid': 'pagination-list-item'})
-
-    # Extract the last page number
-    last_page_number = page_links[-1].get_text(strip=True)
-
-    # Extract only the number using regular expressions
-    last_page_number = re.search(r'\d+', last_page_number).group()
-
-    print("Last page number ", last_page_number)
-
-    return int(last_page_number)
-
-
 # Function to process the current page
 def process_page():
+    start_time = datetime.now()
     global last_page  # Declare the global variable here
     for page_number in range(1, last_page + 1):
         print("Processing page", page_number)
@@ -48,12 +30,12 @@ def process_page():
         soup = BeautifulSoup(response.text, 'html.parser')
 
         if page_number == 1:
-            print(get_last_page(soup))
-            last_page = get_last_page(soup)
-            # last_page = 3
+            last_page = Utils.get_last_page(soup)
 
         urls = extract_urls(soup)
         ad_url.extend(urls)
+    end_time = datetime.now()
+    Utils.print_time_info(start_time, end_time)
     # return ad_url
 
 
