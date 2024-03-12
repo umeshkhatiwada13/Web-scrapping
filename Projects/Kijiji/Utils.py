@@ -20,21 +20,23 @@ def print_time_info(start_time, end_time):
 
 
 def get_last_page(soup):
-    # Find the element containing pagination
-    pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
 
-    # Find all page links
-    page_links = pagination_element.find_all('li', {'data-testid': 'pagination-list-item'})
-
-    # Extract the last page number
-    last_page_number = page_links[-1].get_text(strip=True)
-
-    # Extract only the number using regular expressions
-    last_page_number = re.search(r'\d+', last_page_number).group()
-
-    print("Last page number ", last_page_number)
-
-    return int(last_page_number)
+    return 2
+    # # Find the element containing pagination
+    # pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
+    #
+    # # Find all page links
+    # page_links = pagination_element.find_all('li', {'data-testid': 'pagination-list-item'})
+    #
+    # # Extract the last page number
+    # last_page_number = page_links[-1].get_text(strip=True)
+    #
+    # # Extract only the number using regular expressions
+    # last_page_number = re.search(r'\d+', last_page_number).group()
+    #
+    # print("Last page number ", last_page_number)
+    #
+    # return int(last_page_number)
 
 
 # Function to get the BeautifulSoup object from a URL

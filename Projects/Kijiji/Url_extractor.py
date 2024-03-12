@@ -4,11 +4,6 @@ import pandas as pd
 from datetime import datetime
 import Utils
 
-web_site = 'https://www.kijiji.ca/b-for-rent/city-of-toronto/c30349001l1700273'
-page_number = 1
-last_page = 6
-ad_url = []
-
 
 # Function to extract URLs from the current page
 def extract_urls(soup):
@@ -30,8 +25,9 @@ def process_page():
         response = requests.get(site)
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        if page_number == 1:
-            last_page = Utils.get_last_page(soup)
+        if page_number != 1:
+            response = requests.get(site)
+            soup = BeautifulSoup(response.text, 'html.parser')
 
         urls = extract_urls(soup)
         ad_url.extend(urls)
@@ -39,6 +35,18 @@ def process_page():
     Utils.print_time_info(start_time, end_time)
     # return ad_url
 
+
+web_site = 'https://www.kijiji.ca/b-for-rent/city-of-toronto/c30349001l1700273'
+page_number = 1
+ad_url = []
+
+# Fetch the first page
+response = requests.get(web_site)
+soup = BeautifulSoup(response.text, 'html.parser')
+# Calculate the last page dynamically
+last_page = Utils.get_last_page(soup)
+
+print(last_page)
 
 process_page()
 
