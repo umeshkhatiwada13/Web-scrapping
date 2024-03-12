@@ -1,44 +1,7 @@
 from datetime import datetime
 import re
 import pandas as pd
-import requests
-from bs4 import BeautifulSoup, PageElement
-
-
-# Function to get the BeautifulSoup object from a URL
-def get_soup(url):
-    response = requests.get(url)
-    if response.status_code == 200:
-        return BeautifulSoup(response.text, 'html.parser')
-    else:
-        print(f"Failed to fetch {url}")
-        return None
-
-
-def get_section_text(html_soup, string, parent_element, next_element):
-    # Find the container for the "Wi-Fi and More" section
-    section = html_soup.find(parent_element, string=string)
-
-    # Extract the text "Not Included" from the Wi-Fi section if it exists
-    text = ''
-    if section:
-        text = section.find_next(next_element).get_text(strip=True)
-
-    return text
-
-
-def get_multiple_section_text(soup, section_title):
-    section_heading = soup.find('h4', string=section_title)
-    text = ''
-    if section_heading:
-        section_ul = section_heading.find_next('ul')
-        if section_ul:
-            items = section_ul.find_all('li')
-            text = ', '.join(item.get_text(strip=True) for item in items if item.get_text(strip=True))
-
-    print(text)
-    return text
-
+import Utils as utils
 
 url = 'https://www.kijiji.ca/v-apartments-condos/city-of-toronto/forest-hill-residences-3-bedroom-apartment-for-rent/1664489756'
 
@@ -57,7 +20,7 @@ data = []
 
 counter = 1
 # print(url)
-soup = get_soup(url)
+soup = utils.get_soup(url)
 if soup:
     print("Number ", counter, ' and URL ', url)
     # Initialize a dictionary to store the extracted data for this URL
@@ -134,28 +97,28 @@ if soup:
     ad_data['Utilities'] = utilities_text
 
     # Get and print each section's text
-    ad_data['Wi-Fi and More'] = get_section_text(soup, 'Wi-Fi and More', 'h4', 'ul')
+    ad_data['Wi-Fi and More'] = utils.get_section_text(soup, 'Wi-Fi and More', 'h4', 'ul')
 
-    ad_data['Parking Included'] = get_section_text(soup, 'Parking Included', 'dt', 'dd')
+    ad_data['Parking Included'] = utils.get_section_text(soup, 'Parking Included', 'dt', 'dd')
 
-    ad_data['Agreement Type'] = get_section_text(soup, 'Agreement Type', 'dt', 'dd')
+    ad_data['Agreement Type'] = utils.get_section_text(soup, 'Agreement Type', 'dt', 'dd')
 
-    ad_data['Move-In Date'] = get_section_text(soup, 'Move-In Date', 'dt', 'dd')
+    ad_data['Move-In Date'] = utils.get_section_text(soup, 'Move-In Date', 'dt', 'dd')
 
-    ad_data['Pet Friendly'] = get_section_text(soup, 'Pet Friendly', 'dt', 'dd')
+    ad_data['Pet Friendly'] = utils.get_section_text(soup, 'Pet Friendly', 'dt', 'dd')
 
-    ad_data['Size (sqft)'] = get_section_text(soup, 'Size (sqft)', 'dt', 'dd')
+    ad_data['Size (sqft)'] = utils.get_section_text(soup, 'Size (sqft)', 'dt', 'dd')
 
-    ad_data['Furnished'] = get_section_text(soup, 'Furnished', 'dt', 'dd')
+    ad_data['Furnished'] = utils.get_section_text(soup, 'Furnished', 'dt', 'dd')
 
-    ad_data['Air Conditioning'] = get_section_text(soup, 'Air Conditioning', 'dt', 'dd')
+    ad_data['Air Conditioning'] = utils.get_section_text(soup, 'Air Conditioning', 'dt', 'dd')
 
-    ad_data['Personal Outdoor Space'] = get_section_text(soup, 'Personal Outdoor Space', 'h4', 'ul')
+    ad_data['Personal Outdoor Space'] = utils.get_section_text(soup, 'Personal Outdoor Space', 'h4', 'ul')
 
-    ad_data['Smoking Permitted'] = get_section_text(soup, 'Smoking Permitted', 'dt', 'dd')
+    ad_data['Smoking Permitted'] = utils.get_section_text(soup, 'Smoking Permitted', 'dt', 'dd')
 
-    ad_data['Appliances'] = get_multiple_section_text(soup, 'Appliances')
-    ad_data['Amenities'] = get_multiple_section_text(soup, 'Amenities')
+    ad_data['Appliances'] = utils.get_multiple_section_text(soup, 'Appliances')
+    ad_data['Amenities'] = utils.get_multiple_section_text(soup, 'Amenities')
 
     # Extract description
     description_elm = soup.select_one('.descriptionContainer-2067035870 p')
