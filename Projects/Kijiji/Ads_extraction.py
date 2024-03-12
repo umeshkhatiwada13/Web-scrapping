@@ -19,7 +19,8 @@ data = []
 counter = 1
 # Loop through the list of URLs and process each one
 for url in url_list:
-    # print(url)
+    start_time = datetime.now()
+
     soup = utils.get_soup(url)
     if soup:
         print("Number ", counter, ' and URL ', url)
@@ -142,4 +143,8 @@ for url in url_list:
     df = pd.DataFrame(data)
 
     # Save the DataFrame to a CSV file
-    df.to_csv('output.csv', index=False)
+    df.to_csv(f'kijiji_rental_ads_{counter}.csv', index=False)
+
+    end_time = datetime.now()
+
+    utils.print_time_info(start_time, end_time)

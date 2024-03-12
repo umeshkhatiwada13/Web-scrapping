@@ -6,7 +6,7 @@ import Utils as utils
 url = 'https://www.kijiji.ca/v-apartments-condos/city-of-toronto/forest-hill-residences-3-bedroom-apartment-for-rent/1664489756'
 
 # Path to the CSV file containing URLs
-csv_file_path = 'urls.csv'
+csv_file_path = 'kijiji_rental_ads_url.csv'
 
 # Read the CSV file into a DataFrame
 df = pd.read_csv(csv_file_path)
@@ -19,7 +19,6 @@ url_list = df['URL'].tolist()  # Assuming 'URL' is the column containing the URL
 data = []
 
 counter = 1
-# print(url)
 soup = utils.get_soup(url)
 if soup:
     print("Number ", counter, ' and URL ', url)
@@ -93,10 +92,8 @@ if soup:
                                                                                     '') else f"{item.get_text(strip=True)}_No" if 'No' in item.find(
                     'svg').get('aria-label', '') else f"{item.get_text(strip=True)}" for item in utilities_element)
 
-    # Print the combined text with Yes/No indicators
     ad_data['Utilities'] = utilities_text
 
-    # Get and print each section's text
     ad_data['Wi-Fi and More'] = utils.get_section_text(soup, 'Wi-Fi and More', 'h4', 'ul')
 
     ad_data['Parking Included'] = utils.get_section_text(soup, 'Parking Included', 'dt', 'dd')
@@ -139,4 +136,4 @@ if soup:
 df = pd.DataFrame(data)
 
 # Save the DataFrame to a CSV file
-df.to_csv('output_single.csv', index=False)
+df.to_csv('kijiji_rental_ad_single.csv', index=False)

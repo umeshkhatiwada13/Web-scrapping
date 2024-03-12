@@ -9,6 +9,7 @@ page_number = 1
 last_page = 6
 ad_url = []
 
+
 # Function to extract URLs from the current page
 def extract_urls(soup):
     # Find all anchor tags with data-testid="listing-link"
@@ -47,7 +48,7 @@ print("Total data ", len(ad_url))
 df = pd.DataFrame({'URL': ad_url})
 
 # Specify the file path for the CSV file
-csv_file_path = 'urls.csv'
+csv_file_path = 'kijiji_rental_ads_url.csv'
 
 # Save the DataFrame to a CSV file with a header
 df.to_csv(csv_file_path, index=False)
