@@ -2,28 +2,26 @@ import pandas as pd
 from datetime import datetime
 import re
 import Utils as utils
+import os
 
 # Path to the CSV file containing URLs
-csv_file_path = 'urls.csv'
+csv_file_path = 'kijiji_rental_ads_url.csv'
 
 # Read the CSV file into a DataFrame
 df = pd.read_csv(csv_file_path)
-
 df.head()
-
 # Extract the URLs as a list
 url_list = df['URL'].tolist()  # Assuming 'URL' is the column containing the URLs
 
 data = []
+counter = 0
+start_time = datetime.now()
 
-counter = 1
 # Loop through the list of URLs and process each one
 for url in url_list:
-    start_time = datetime.now()
 
     soup = utils.get_soup(url)
     if soup:
-        print("Number ", counter, ' and URL ', url)
         # Initialize a dictionary to store the extracted data for this URL
         ad_data = {}
 
@@ -138,13 +136,16 @@ for url in url_list:
         data.append(ad_data)
 
         counter += 1
+        print("Number ", counter, ' and URL ', url)
 
-    # Create a DataFrame from the collected data
-    df = pd.DataFrame(data)
+# Create a DataFrame from the collected data
+df = pd.DataFrame(data)
 
-    # Save the DataFrame to a CSV file
-    df.to_csv(f'kijiji_rental_ads_{counter}.csv', index=False)
+# Save the DataFrame to a CSV file
+df.to_csv(f'kijiji_rental_ads_{counter}.csv', index=False)
 
-    end_time = datetime.now()
+# Delete the original CSV file containing URLs
+os.remove('kijiji_rental_ads_url.csv')
+print("Delete csv kijiji_rental_ads_url.csv")
 
-    utils.print_time_info(start_time, end_time)
+utils.print_time_info(start_time, datetime.now())

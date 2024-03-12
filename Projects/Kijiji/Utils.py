@@ -21,7 +21,7 @@ def print_time_info(start_time, end_time):
 
 def get_last_page(soup):
 
-    return 2
+    return 1
     # # Find the element containing pagination
     # pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
     #
