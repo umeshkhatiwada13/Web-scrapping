@@ -1,6 +1,8 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup, PageElement
+from datetime import datetime
+import re
 
 
 # Function to get the BeautifulSoup object from a URL
@@ -11,6 +13,31 @@ def get_soup(url):
     else:
         print(f"Failed to fetch {url}")
         return None
+
+
+def get_section_text(html_soup, string, parent_element, next_element):
+    # Find the container for the "Wi-Fi and More" section
+    section = html_soup.find(parent_element, string=string)
+
+    # Extract the text "Not Included" from the Wi-Fi section if it exists
+    text = ''
+    if section:
+        text = section.find_next(next_element).get_text(strip=True)
+
+    return text
+
+
+def get_multiple_section_text(soup, section_title):
+    section_heading = soup.find('h4', string=section_title)
+    text = ''
+    if section_heading:
+        section_ul = section_heading.find_next('ul')
+        if section_ul:
+            items = section_ul.find_all('li')
+            text = ', '.join(item.get_text(strip=True) for item in items if item.get_text(strip=True))
+
+    print(text)
+    return text
 
 
 # Path to the CSV file containing URLs
@@ -41,33 +68,37 @@ for url in url_list:
             continue
 
         # Extract title, price, address, and posting date
-        ad_data['Title'] = soup.find('h1', class_='title-4206718449').text.strip()
+        ad_data['Title'] = title_el.text.strip()
 
         # Extract Price
         price_elem = soup.find(class_='priceWrapper-3915768379')
+        price_text = ''
         if price_elem:
-            ad_data['Price'] = price_elem.text.strip()
+            price_text = price_elem.text.strip()
         else:
             backup_price_elem = soup.find(class_='currentPrice-231544276')
-            ad_data['Price'] = backup_price_elem.text.strip() if backup_price_elem else None
+            price_text = backup_price_elem.text.strip() if backup_price_elem else None
+
+        ad_data['Price($)'] = ''.join(re.findall(r'\d+', price_text))
 
         # Extract Address
         address_elem = soup.find(itemprop='address')
         ad_data['Address'] = address_elem.text.strip() if address_elem else None
 
-        # Extract Posting Date
-        posting_date_elem = soup.find(class_='datePosted-1776470403')
+        # Find the div with class "datePosted"
+        date_posted_div = soup.find('div', class_='datePosted-1776470403')
 
-        # Extract posting date if posting_date_elem is present
-        if posting_date_elem is not None:
-            span_element = posting_date_elem.find('span')  # Find the span element
-            if span_element is not None:
-                posting_date = span_element['title']  # Get the title attribute
-                ad_data['Posting Date'] = posting_date
-            else:
-                ad_data['Posting Date'] = None
-        else:
-            ad_data['Posting Date'] = None
+        posted_datetime = ''
+        # Extract the datetime attribute from the time tag
+        if date_posted_div:
+            time_tag = date_posted_div.find('time')
+            if time_tag and 'datetime' in time_tag.attrs:
+                datetime_str = time_tag['datetime']
+
+                # Parse the datetime string into a datetime object
+                posted_datetime = datetime.strptime(datetime_str, "%Y-%m-%dT%H:%M:%S.%fZ")
+
+        ad_data['Date Posted'] = posted_datetime
 
         # Extract bedrooms, bathrooms, and building type if title_attributes is present
         title_attributes = soup.find(class_='titleAttributes-183069789')
@@ -87,80 +118,46 @@ for url in url_list:
             ad_data['Bathrooms'] = None
             ad_data['Building Type'] = None
 
-        # Initialize ad_data dictionary
-        ad_data_list = {
-            "Size (sqft)": None,
-            "Furnished": None,
-            "Appliances": None,
-            "Air Conditioning": None,
-            "Personal Outdoor Space": None,
-            "Smoking Permitted": None
-        }
+        # Find the container for the "Utilities Included" section
+        utilities_included_container = soup.find('h4', string='Utilities Included')
 
-        # Extract Size (sqft), Furnished, Appliances, Air Conditioning, Personal Outdoor Space, Smoking Permitted
-        root_div = soup.find(class_='root-3161363123')
-        if root_div:
-            attribute_lists = root_div.find_all('ul', class_='list-2534755251')
-            for attribute_list in attribute_lists:
-                attributes = attribute_list.find_all('li', class_='twoLinesAttribute-633292638')
-                for attribute in attributes:
-                    label = attribute.find('dt', class_='twoLinesLabel-2332083105').text.strip()
-                    value = attribute.find('dd', class_='twoLinesValue-2653438411').text.strip()
-                    if label in ad_data_list:
-                        ad_data[label] = value
-                    else:
-                        ad_data[label] = None
+        # Extract the "Utilities Included" section if it exists
+        utilities_text = ''
+        if utilities_included_container:
+            utilities_included_section = utilities_included_container.find_next('ul')
+            if utilities_included_section:
+                utilities_element = utilities_included_section.find_all('li')
+                utilities_text = ','.join(
+                    f"{item.get_text(strip=True)}_Yes" if 'Yes' in item.find('svg').get('aria-label',
+                                                                                        '') else f"{item.get_text(strip=True)}_No" if 'No' in item.find(
+                        'svg').get('aria-label', '') else f"{item.get_text(strip=True)}" for item in utilities_element)
 
-        # Extract attributes from Overview section
-        overview_section = soup.find('h3', string='Overview')
-        if overview_section:
-            for li in overview_section.find_next('ul').find_all('li'):
-                attribute_title_elem = li.find('h4', class_='attributeGroupTitle-889029213')
-                if attribute_title_elem:
-                    attribute_title = attribute_title_elem.text.strip()
-                    if attribute_title == 'Utilities Included':
-                        utilities_included = ', '.join(item.text.strip() for item in li.find('ul').find_all('li'))
-                        ad_data['Utilities Included'] = utilities_included
-                    elif attribute_title == 'Wi-Fi and More':
-                        wifi_included = li.find('ul').text.strip()
-                        ad_data['Wi-Fi and More'] = wifi_included
-                    elif 'Parking Included' in attribute_title:
-                        parking_included = li.find('dd').text.strip()
-                        ad_data['Parking Included'] = parking_included
-                    elif 'Agreement Type' in attribute_title:
-                        agreement_type = li.find('dd').text.strip()
-                        ad_data['Agreement Type'] = agreement_type
-                    elif 'Pet Friendly' in attribute_title:
-                        pet_friendly = li.find('dd').text.strip()
-                        ad_data['Pet Friendly'] = pet_friendly
+        # Print the combined text with Yes/No indicators
+        ad_data['Utilities'] = utilities_text
 
-        # Assuming soup is a BeautifulSoup object
-        unit_section = soup.find('h3', string='The Unit')
-        if unit_section:
-            for li in unit_section.find_next('ul').find_all('li'):
-                if isinstance(li, PageElement):
-                    try:  # Check if li is an instance of PageElement
-                        attribute_title_elem = li.find('dt', class_='twoLinesLabel-2332083105')
-                        if attribute_title_elem:  # Check if attribute_title_elem is not None
-                            attribute_title = attribute_title_elem.text.strip()
-                            # print('Attribute Title:', attribute_title)
-                        # else:
-                        # print('Attribute Title not found.')
-                    except Exception as e:
-                        print('An error occurred:', e)
+        # Get and print each section's text
+        ad_data['Wi-Fi and More'] = get_section_text(soup, 'Wi-Fi and More', 'h4', 'ul')
 
-        # Extract attributes from The Building section
-        building_section = soup.find('h3', string='The Building')
-        if building_section:
-            for li in building_section.find_next('ul').find_all('li'):
-                attribute_title_elem = li.find('dt', class_='twoLinesLabel-2332083105')
-                if attribute_title_elem:  # Check if attribute_title_elem is not None
-                    attribute_title = attribute_title_elem.text.strip()
-                    attribute_value_elem = li.find('dd', class_='twoLinesValue-2653438411')
-                    attribute_value = attribute_value_elem.text.strip() if attribute_value_elem else None
-                    ad_data[attribute_title] = attribute_value
-                # else:
-                # print('Attribute title not found.')
+        ad_data['Parking Included'] = get_section_text(soup, 'Parking Included', 'dt', 'dd')
+
+        ad_data['Agreement Type'] = get_section_text(soup, 'Agreement Type', 'dt', 'dd')
+
+        ad_data['Move-In Date'] = get_section_text(soup, 'Move-In Date', 'dt', 'dd')
+
+        ad_data['Pet Friendly'] = get_section_text(soup, 'Pet Friendly', 'dt', 'dd')
+
+        ad_data['Size (sqft)'] = get_section_text(soup, 'Size (sqft)', 'dt', 'dd')
+
+        ad_data['Furnished'] = get_section_text(soup, 'Furnished', 'dt', 'dd')
+
+        ad_data['Air Conditioning'] = get_section_text(soup, 'Air Conditioning', 'dt', 'dd')
+
+        ad_data['Personal Outdoor Space'] = get_section_text(soup, 'Personal Outdoor Space', 'h4', 'ul')
+
+        ad_data['Smoking Permitted'] = get_section_text(soup, 'Smoking Permitted', 'dt', 'dd')
+
+        ad_data['Appliances'] = get_multiple_section_text(soup, 'Appliances')
+        ad_data['Amenities'] = get_multiple_section_text(soup, 'Amenities')
 
         # Extract description
         description_elm = soup.select_one('.descriptionContainer-2067035870 p')
@@ -169,15 +166,6 @@ for url in url_list:
         # Extract visit counter
         visit_counter_elem = soup.select_one('.visitCounter-204515568 span')
         ad_data['Visit Counter'] = visit_counter_elem.text.strip() if visit_counter_elem else None
-
-        # Extract user info
-        user_info_elem = soup.select_one('.container-3136975908 .header-1351916284')
-        if user_info_elem:
-            ad_data['User Info'] = user_info_elem.text.strip()
-        else:
-            # Extracting user info from alternative class
-            alt_user_info_elem = soup.select_one('.root-3161363123 .header-1351916284')
-            ad_data['User Info'] = alt_user_info_elem.text.strip() if alt_user_info_elem else None
 
         ad_data['url'] = url
 
@@ -190,7 +178,4 @@ for url in url_list:
     df = pd.DataFrame(data)
 
     # Save the DataFrame to a CSV file
-    df.to_csv('output_1.csv', index=False)
-
-    # Display the DataFrame
-    # print(df)
+    df.to_csv('output.csv', index=False)
