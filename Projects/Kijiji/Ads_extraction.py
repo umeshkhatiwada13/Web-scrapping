@@ -60,7 +60,12 @@ for url in url_list:
 
         # Extract posting date if posting_date_elem is present
         if posting_date_elem is not None:
-            ad_data['Posting Date'] = posting_date_elem.time['title']
+            span_element = posting_date_elem.find('span')  # Find the span element
+            if span_element is not None:
+                posting_date = span_element['title']  # Get the title attribute
+                ad_data['Posting Date'] = posting_date
+            else:
+                ad_data['Posting Date'] = None
         else:
             ad_data['Posting Date'] = None
 
