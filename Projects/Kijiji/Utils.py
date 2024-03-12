@@ -2,6 +2,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 
+
 def format_time_elapsed(start_time, elapsed_time):
     total_seconds = elapsed_time.total_seconds()
     hours = int(total_seconds // 3600)
@@ -20,23 +21,21 @@ def print_time_info(start_time, end_time):
 
 
 def get_last_page(soup):
+    # Find the element containing pagination
+    pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
 
-    return 1
-    # # Find the element containing pagination
-    # pagination_element = soup.find('ul', {'data-testid': 'pagination-list'})
-    #
-    # # Find all page links
-    # page_links = pagination_element.find_all('li', {'data-testid': 'pagination-list-item'})
-    #
-    # # Extract the last page number
-    # last_page_number = page_links[-1].get_text(strip=True)
-    #
-    # # Extract only the number using regular expressions
-    # last_page_number = re.search(r'\d+', last_page_number).group()
-    #
-    # print("Last page number ", last_page_number)
-    #
-    # return int(last_page_number)
+    # Find all page links
+    page_links = pagination_element.find_all('li', {'data-testid': 'pagination-list-item'})
+
+    # Extract the last page number
+    last_page_number = page_links[-1].get_text(strip=True)
+
+    # Extract only the number using regular expressions
+    last_page_number = re.search(r'\d+', last_page_number).group()
+
+    print("Last page number ", last_page_number)
+
+    return int(last_page_number)
 
 
 # Function to get the BeautifulSoup object from a URL
@@ -70,5 +69,4 @@ def get_multiple_section_text(soup, section_title):
             items = section_ul.find_all('li')
             text = ', '.join(item.get_text(strip=True) for item in items if item.get_text(strip=True))
 
-    print(text)
     return text

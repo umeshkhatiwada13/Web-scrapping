@@ -36,7 +36,7 @@ def process_page():
     # return ad_url
 
 
-web_site = 'https://www.kijiji.ca/b-for-rent/city-of-toronto/c30349001l1700273'
+web_site = 'https://www.kijiji.ca/b-city-of-toronto/apartment/k0l1700273?dc=true&sort=dateDesc'
 page_number = 1
 ad_url = []
 
